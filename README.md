@@ -56,3 +56,71 @@ print(f'total de operações{coluna}:')
 print(cp)
 
 exp_final.to_csv(origem +'exp_final.csv',index=False)
+
+import pandas as pd
+import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
+from datetime import datetime
+
+# Seu dataframe exp_final já está carregado
+
+# Criar coluna de data a partir de CO_ANO e CO_MES
+exp_final['DATA'] = pd.to_datetime(exp_final['CO_ANO'].astype(str) + '-' + 
+                                   exp_final['CO_MES'].astype(str) + '-01')
+
+# Filtrar apenas o período desejado (janeiro 2025 a janeiro 2026)
+data_inicio = '2025-01-01'
+data_fim = '2026-01-31'
+exp_filtrado = exp_final[(exp_final['DATA'] >= data_inicio) & 
+                         (exp_final['DATA'] <= data_fim)]
+
+# Agrupar por mês e somar KG_LIQUIDO
+importacoes_mensais = exp_filtrado.groupby('DATA')['KG_LIQUIDO'].sum().reset_index()
+
+# Ordenar por data
+importacoes_mensais = importacoes_mensais.sort_values('DATA')
+
+print("Importações mensais em KG:")
+print(importacoes_mensais)
+
+# Criar o gráfico
+fig, ax = plt.subplots(figsize=(12, 6))
+
+# Plotar barras ou linha
+ax.bar(importacoes_mensais['DATA'], importacoes_mensais['KG_LIQUIDO'], 
+       color='steelblue', alpha=0.7, label='Total KG')
+
+# Adicionar linha de tendência
+ax.plot(importacoes_mensais['DATA'], importacoes_mensais['KG_LIQUIDO'], 
+        color='darkblue', marker='o', linewidth=2, label='Tendência')
+
+# Formatar eixo x com meses
+ax.xaxis.set_major_formatter(mdates.DateFormatter('%b %Y'))
+ax.xaxis.set_major_locator(mdates.MonthLocator())
+
+# Rotacionar os labels para melhor visualização
+plt.xticks(rotation=45, ha='right')
+
+# Adicionar títulos e labels
+ax.set_title('Evolução Mensal das Importações (KG) - Jan 2025 a Jan 2026', 
+             fontsize=16, fontweight='bold')
+ax.set_xlabel('Mês', fontsize=12)
+ax.set_ylabel('Total KG Importados', fontsize=12)
+
+# Adicionar grid
+ax.grid(True, alpha=0.3, linestyle='--')
+
+# Adicionar valores sobre as barras
+for i, row in importacoes_mensais.iterrows():
+    ax.text(row['DATA'], row['KG_LIQUIDO'] + 50, 
+            f'{int(row["KG_LIQUIDO"]):,}'.replace(',', '.'),
+            ha='center', va='bottom', fontsize=9)
+
+# Adicionar legenda
+ax.legend()
+
+# Ajustar layout
+plt.tight_layout()
+
+# Mostrar gráfico
+plt.show()
